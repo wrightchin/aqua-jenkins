@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+    environment {
+       DOCKERHUB_CREDENTIALS=credentials('a49915b9-1cf5-4893-b065-4ef8a6fe8587')
+    }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/wrightchin/jenkins-demo-2.git']]])
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    dockerImage = docker.build "wrightchin/jenkins-demo-2:latest"
+                }
+            }
+        }
+        stage('Scan') {
+            steps{
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login registry.aquasec.com -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                aqua containerRuntime: 'docker', customFlags: '', hideBase: false, hostedImage: '', localImage: 'wrightchin/jenkins-demo-2', localToken: '', locationType: 'local', notCompliesCmd: '', onDisallowed: 'ignore', policies: '', register: false, registry: '', scannerPath: '907d16ddc3a84b4a8e6d1e3fd337683-21415257.ap-southeast-1.elb.amazonaws.com:8080', showNegligible: false, tarFilePath: ''
+            }
+        }
+    }
+}
